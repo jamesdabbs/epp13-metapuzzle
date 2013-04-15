@@ -1,6 +1,7 @@
 require "colorize"
 require "trie"
 
+Letters = Set.new "a".."z"
 
 # -- Monkey-patches -----
 # I would typically avoid these, but they are useful for these sorts of quick
@@ -27,27 +28,14 @@ class String
   end
 end
 
-class Trie
-  def include_string? str
-    !find_prefix(str).values.empty?
-  end
-
+class TrieNode
   def include_fuzzy? str, wildcard="."
+    return true if str.empty?
     c, *cs = str.chars
-    if cs.empty?
-      if c == wildcard
-        keys.any?
-      else
-        !find(c).empty?
-      end
+    if c == wildcard
+      Letters.any? { |c| walk(c).include_fuzzy? cs.join(""), wildcard rescue false }
     else
-      if c == wildcard
-        keys.map(&:first).uniq.any? do |d|
-          find_prefix(d).include_fuzzy? cs.join(""), wildcard
-        end
-      else
-        find_prefix(c).include_fuzzy? cs.join(""), wildcard
-      end
+      walk(c).include_fuzzy? cs.join(""), wildcard rescue false
     end
   end
 end
@@ -75,15 +63,12 @@ OrderTypes = Solutions.map(&:order_type).uniq
 
 Symbols = Solutions.flatten.by_frequency
 
-Letters = Set.new "a".."z"
-
 Lookups = Hash[ OrderTypes.map { |t| [t, Trie.new] } ]
 File.foreach("words.txt") do |w|
   w.strip!
   next unless Lookups.include? w.order_type
-  Lookups[w.order_type].insert w.downcase, 1
+  Lookups[w.order_type].add w.downcase
 end
-
 puts "#{Time.now - start} s"
 
 # ----------
@@ -106,7 +91,7 @@ class Assignment
   def correct?
     Solutions.all? do |solution|
       word = mask solution
-      Lookups[solution.order_type].include_string? word
+      Lookups[solution.order_type].has_key? word
     end
   end
 
@@ -116,7 +101,7 @@ class Assignment
     Solutions.all? do |solution|
       ot = solution.order_type
       m  = mask solution
-      Lookups[ot].include_fuzzy? m, "."
+      Lookups[ot].root.include_fuzzy? m, "."
     end
   end
 

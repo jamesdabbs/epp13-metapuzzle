@@ -1,8 +1,8 @@
 GIT
-  remote: git://github.com/dustin/ruby-trie.git
-  revision: ca95d508d8aadef361905e4944a38db072eecfae
+  remote: git://github.com/tyler/trie.git
+  revision: 7452dd99df7319ad0ecd5061e7188441c3f37d09
   specs:
-    trie (0.0.2)
+    fast_trie (0.5.0)
 
 GEM
   remote: https://rubygems.org/
@@ -21,5 +21,5 @@ PLATFORMS
 
 DEPENDENCIES
   colorize
+  fast_trie!
   pry
-  trie!
