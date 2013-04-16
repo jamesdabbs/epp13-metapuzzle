@@ -31,7 +31,25 @@ The obvious thing to do at this point is scan the list of valid words, checking 
 
 ### Observation 2.
 
-We have a long known prefix that we're interested in here, so this is a perfect place for a [trie](http://en.wikipedia.org/wiki/Trie). In the case of 'bab..', a trie would narrow things down to 7 possible choices after only 3 down the trie. Note: 10 is a *lot* less than 8938.
+We have a long known prefix that we're interested in here, so this is a perfect place for a [trie](http://en.wikipedia.org/wiki/Trie). In the case of 'bab..', a trie would narrow things down to 7 possible choices after only 3 steps down the trie. Note: 7 is a *lot* less than 8938.
+
+A strict prefix trie doesn't help much if we only have a suffix like '.able', however. Some trie implementations do support wildcard lookups for such cases; the one I was using didn't, but it was fairly easy to monkey-patch in:
+
+```ruby
+class TrieNode
+  def include_fuzzy? str, wildcard="."
+    return true if str.empty?
+    c, *cs = str.chars
+    if c == wildcard
+      Letters.any? { |c| walk(c).include_fuzzy? cs.join(""), wildcard rescue false }
+    else
+      walk(c).include_fuzzy? cs.join(""), wildcard rescue false
+    end
+  end
+end
+```
+
+The idea here is to think of a lookup as a walk down the trie from the root. If we see a letter, we follow the branch corresponding to that letter as usual. If we see a wildcard, we check each branch out of the current node instead.
 
 ### Observation 3.
 
